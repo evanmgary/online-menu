@@ -1,0 +1,29 @@
+Create/Update DB Queries:
+
+Initialize:
+Create store
+
+Menu page: 
+Create order containing orderItems, add to currentorders
+
+Admin page:
+Create category
+Update category by adding items
+Create item with all fields
+Update specific item
+Delete specific item
+Delete category
+
+Order page:
+Delete order from store orders
+
+Read DB Queries:
+
+Menu page: 
+Read category from store, then get items from category to fill menu (Runs on page load, fills the "data" object)
+
+Admin page:
+Same as menu but after every update/create/Delete
+
+Order page:
+Read currentorders from store at intervals

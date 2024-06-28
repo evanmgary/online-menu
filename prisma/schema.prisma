@@ -19,7 +19,7 @@ model Category {
   id      Int    @id @default(autoincrement())
   name    String
   items   Item[]
-  Store   Store? @relation(fields: [storeId], references: [id])
+  store   Store? @relation(fields: [storeId], references: [id])
   storeId Int?
 }
 
@@ -30,7 +30,7 @@ model Item {
   desc       String
   basePrice  Decimal   @db.Money
   options    Json
-  Category   Category? @relation(fields: [categoryId], references: [id])
+  category   Category? @relation(fields: [categoryId], references: [id])
   categoryId Int?
 }
 
@@ -38,7 +38,7 @@ model OrderItem {
   id      Int     @id @default(autoincrement())
   text    String
   price   Decimal @db.Money
-  Order   Order?  @relation(fields: [orderId], references: [id])
+  order   Order?  @relation(fields: [orderId], references: [id])
   orderId Int?
 }
 
@@ -47,7 +47,8 @@ model Order {
   name       String
   phone      String?
   email      String
+  time       BigInt
   orderItems OrderItem[]
-  Store      Store?      @relation(fields: [storeId], references: [id])
+  store      Store?      @relation(fields: [storeId], references: [id])
   storeId    Int?
 }

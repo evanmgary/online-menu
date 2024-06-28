@@ -1,4 +1,4 @@
-[{"name": "Combination Plates", "items": [
+[{"id": 3, "name": "Combination Plates", "items": [
     {"id": 1,"name": "kpc asdasdasdasdavvvvv", "code": "A1","basePrice": 8.99, "desc": "kjkfjkfjsakf","options": [
         {"text": "chicken (+1.00)", "adjustment" : 1.00},
         {"text": "chicken2 (+3.00)", "adjustment" : 3.00}
@@ -12,7 +12,7 @@
         {"text": "chicken2 (+3.00)", "adjustment" : 3.00}
     ]}
 ]},
-{"name": "More Items", "items": [
+{"id": 2, "name": "More Items", "items": [
     {"id": 4, "name": "kpc asdasdasdasdavvvvv1", "code": "A2", "basePrice": 8.99,"desc": "kjkfjkfjsakf", "options": [
         {"text": "chicken (+1.00)", "adjustment" : 1.00},
         {"text": "chicken2 (+3.00)", "adjustment" : 3.00}

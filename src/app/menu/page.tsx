@@ -7,10 +7,11 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
+import { getData, createOrder } from "../actions/menuActions"
 
 export default function Page(){
     
-    const [data, setData] = useState(getData())
+    const [data, setData] = useState(testData)
     const [category , setCategory] = useState(getCategoryObj("More Items"))
     const [cart, setCart] = useState<CartItem[]>([])
     const [selected, setSelected] = useState<CartItem>()
@@ -37,11 +38,6 @@ export default function Page(){
                     adjustment: number;
                 }[];
         }[]
-    }
-
-    function getData(){
-        //fetch("/api")
-        return testData
     }
     
     function getCategoryObj(name: string){
@@ -97,7 +93,7 @@ export default function Page(){
                                                 <PopoverTrigger asChild>
                                                     <Button onClick={() => setSelected(undefined)} >Details</Button>
                                                 </PopoverTrigger>
-                                                <PopoverContent>
+                                                <PopoverContent className="w-90 m-l-6">
                                                     <div className="opt-header">
                                                         <h1 className="opt-code-name">{item.code} {item.name} <span>${item.basePrice}</span></h1>
                                                         <p className="opt-desc">{item.desc}</p>
@@ -116,7 +112,7 @@ export default function Page(){
                                                             
                                                             }
                                                         </RadioGroup>
-                                                        <Button onClick={addItem}>Add to Cart</Button>
+                                                        <Button className="mt-5" onClick={addItem}>Add to Cart</Button>
                                                     </div>
                                                 </PopoverContent>
                                             </Popover>
@@ -132,7 +128,7 @@ export default function Page(){
                 <PopoverTrigger asChild>
                     <Button className="float-right mr-10">View Cart and Order</Button>
                 </PopoverTrigger>
-                <PopoverContent>
+                <PopoverContent className="mr-10 w-100">
                     <Table>
                         <TableBody>
                         {

@@ -7,6 +7,9 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { getData, createCategory, createItem ,updateCategory, updateItem, deleteCategory, deleteItem } from "../actions/adminActions"
+
+
 export default function Page(){
     
     const [data, setData] = useState(getData())
@@ -92,6 +95,14 @@ export default function Page(){
         }
         
     }
+
+    function chgCategory(catId: number){
+
+    }
+
+    function delCategory(catId: number){
+        
+    }
   
 
     return(
@@ -99,8 +110,20 @@ export default function Page(){
             <div className="menu-split flex flex-row w-full m-8">
                 <div className="menu-categories basis-1/4">
                     <div className="category-box w-80 min-h-48 border-2 border-black rounded-sm">
-                        {data && data.map(item => {
-                            return <div className={`category-item text-lg p-4 even:bg-slate-200 odd:bg-white hover:bg-cyan-100`} key={item.name} onClick={() => setCategory(getCategoryObj(item.name))}>{item.name} </div>
+                        {data && data.map(cat => {
+                            return <div className={`category-item text-lg p-4 even:bg-slate-200 odd:bg-white hover:bg-cyan-100`} key={cat.name} onClick={() => setCategory(getCategoryObj(cat.name))}>
+                                {cat.name} 
+                                <Popover>
+                                    <PopoverTrigger>
+                                        <Button>Modify/Delete</Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent>
+                                        <Input type="text" placeholder="Category name.."></Input>
+                                        <Button onClick={() => chgCategory(cat.id)}>Update Category</Button>
+                                        <Button onClick={() => delCategory(cat.id)}>Delete Category</Button>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
                         })}
                     </div>
                     <div className={`category-item text-lg p-4 even:bg-slate-200 odd:bg-white hover:bg-cyan-100`} onClick={newCategory}>Add New Category</div>
