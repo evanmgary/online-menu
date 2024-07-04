@@ -1,5 +1,13 @@
 "use server"
-import prisma from "../client";
+import {prisma} from "../client";
+
+export async function getStoreId(){
+    const store = await prisma.store.findFirst({
+        
+    })
+    console.log(store?.id)
+    return store?.id
+}
 
 
 export async function createCategory(name: string, storeId: number){
@@ -16,7 +24,7 @@ export async function createCategory(name: string, storeId: number){
 }
 
 
-export async function createItem(name: string, code: string, desc: string, basePrice: number, options: [{text: string, price: number}], categoryId: number){
+export async function createItem(name: string, code: string, desc: string, basePrice: number, options: {text: string, adjustment: number}[], categoryId: number){
     const item = await prisma.item.create({
         data: {
             name: name,
@@ -46,7 +54,7 @@ export async function updateCategory(categoryId: number, name: string){
 }
 
 
-export async function updateItem(name: string, code: string, desc: string, basePrice: number, options: [{text: string, price: number}], itemId: number){
+export async function updateItem(name: string, code: string, desc: string, basePrice: number, options: {text: string, adjustment: number}[], itemId: number){
     const item = await prisma.item.update({
         where: {
             id: itemId

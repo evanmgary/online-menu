@@ -1,7 +1,15 @@
 "use server"
-import prisma from "../client"
+import {prisma} from "../client"
 
-export async function createOrder(name: string, phone: string, email: string, orderItems: [{text: string, price: number}], storeId: number){
+export async function getStoreId(){
+    const store = await prisma.store.findFirst({
+        
+    })
+    return store?.id
+}
+
+
+export async function createOrder(name: string, phone: string, email: string, orderItems: {text: string, price: number}[], storeId: number){
     const time = Date.now()
     
     const order = await prisma.order.create({

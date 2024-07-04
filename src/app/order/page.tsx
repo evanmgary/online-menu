@@ -3,26 +3,65 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch"
 import { useState, useEffect, useRef } from "react"
-import { getOrders, deleteOrder } from "../actions/orderActions"
+import { getStoreId, getOrders, deleteOrder } from "../actions/orderActions"
+import { Prisma } from "@prisma/client";
 
 
 export default function Page(){
 
-    const [listening, setListening] = useState<boolean>(false)
-    const [orders, setOrders] = useState<Array<any>>([])
-    const [completedOrders, setCompletedOrders] = useState<Array<any>>([])
+    const listening = useRef<boolean>(false)
+    const [orders, setOrders] = useState<Order[]>([])
+    const [completedOrders, setCompletedOrders] = useState<Order[]>([])
     const timer = useRef<NodeJS.Timer>()
-    const [time, setTime] = useState(Date.now())
+    const [time, setTime] = useState(BigInt(Date.now()))
+    const storeId = useRef<number>()
+
+    interface Order{
+            id: number;
+            name: string;
+            phone: string | null;
+            email: string;
+            time: bigint;
+            storeId: number | null;
+            orderItems: {
+                id: number;
+                text: string;
+                price: Prisma.Decimal;
+                orderId: number | null;
+            }[];
+    }
+    
 
     useEffect(() => {
-        timer.current = setInterval(timerFunc, 1000)
+        (async () => {
+            storeId.current = await getStoreId()
+            console.log(storeId.current)
+        })()
+    }, [])
+
+    useEffect(() => {
+        async function timerFunc(){
+            if (listening.current){
+                setTime(BigInt(Date.now()))
+                getOrdersDB()
+            }
+        }
+        timer.current = setInterval(timerFunc, 5000)
     }, [])
     
-    function timerFunc(){
-        setTime(Date.now())
+    
+
+    function sumOrder(items: {
+        id: number;
+        text: string;
+        price: Prisma.Decimal;
+        orderId: number | null;
+    }[]){
+        return items.reduce((accumulator, current) => accumulator.plus(current.price), new Prisma.Decimal(0)).toFixed(2)
+
     }
 
-    function getColor(startTime: number){
+    function getColor(startTime: bigint){
         const timeDiff = time - startTime
         if (timeDiff < (1000 * 60 * 5)){
             return "green"
@@ -35,10 +74,25 @@ export default function Page(){
         }
     }
 
+    async function getOrdersDB(){
+        const orders = await getOrders(storeId.current!)
+        setOrders(orders!)
+    }
+
+    async function completeOrder(order: Order){
+        setCompletedOrders([...completedOrders, order])
+        try{
+            deleteOrder(order.id, storeId.current!)
+        }
+        catch(e){
+            console.log(e)
+        }
+    }
+
     return(
         <div>
             <h1>Order Tracking</h1>
-            <Switch checked={listening} onCheckedChange={() => setListening(!listening)} className="flex items-center space-x-2">Listen for Orders</Switch>
+            <Switch checked={listening.current} onCheckedChange={() => (listening.current = !listening.current)} className="flex items-center space-x-2">Listen for Orders</Switch>
             <div className="border-1 rounded">
                 {orders.map((order) => {
                     return(
@@ -46,11 +100,11 @@ export default function Page(){
                             <h2>Order #{order.id}</h2>
                             <p>{order.name}</p>
                             <p>{order.phone}</p>
-                            {order.items.map((item: {text: string, price: number}) => {
-                                <p><span>{item.text}</span><span>{item.price}</span></p>
+                            {order.orderItems.map((item: {id: number,text: string, price: Prisma.Decimal, orderId: number | null}) => {
+                                return <p key={item.id}><span>{item.text}</span><span>{item.price.toFixed(2)}</span></p>
                             })}
-                            <h3>${order.price}</h3>
-                            <Button>Complete Order</Button>
+                            <h3>${sumOrder(order.orderItems)}</h3>
+                            <Button onClick={() => completeOrder(order)}>Complete Order</Button>
                         </Card>
                     )
                 })}

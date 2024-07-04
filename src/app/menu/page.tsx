@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import testData from "@/app/testdata.json"
 import { Table, TableCell, TableRow, TableBody } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -7,17 +7,26 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { getData, createOrder } from "../actions/menuActions"
+import { getStoreId, getData, createOrder } from "../actions/menuActions"
 
 export default function Page(){
     
-    const [data, setData] = useState(testData)
+    const [data, setData] = useState<any>(testData)
     const [category , setCategory] = useState(getCategoryObj("More Items"))
     const [cart, setCart] = useState<CartItem[]>([])
     const [selected, setSelected] = useState<CartItem>()
-    const oddColor = "bg-red-50"
-    const evenColor = "bg-slate-500"
-    const hoverColor = "bg-amber-50"
+    const storeId = useRef<number>()
+
+    useEffect(() => {
+        (async () => {
+            storeId.current = await getStoreId()
+            console.log(storeId.current)
+            getDataDB()
+        })()
+        
+        
+    }, [])
+
     //selected object is {code, name, optionName, adjustedPrice}
     interface CartItem{
         id: number;
@@ -27,21 +36,20 @@ export default function Page(){
         option: string
     }
 
-    interface Category{
-            name: string;
-            items: {
-                name: string;
-                code: string;
-                basePrice: number;
-                options: {
-                    text: string;
-                    adjustment: number;
-                }[];
-        }[]
+    async function getDataDB(){
+        try{
+            const dataDB = await getData(storeId.current!)
+            console.log(dataDB)
+            setData(dataDB)
+        }
+        catch(e){
+            console.log(e)
+            toast("Error getting data")
+        }
     }
     
     function getCategoryObj(name: string){
-        return data.find((item)=> item.name === name) 
+        return data.find((item: any)=> item.name === name) 
     }
 
     function sumCart(){
@@ -67,14 +75,29 @@ export default function Page(){
         cartCopy.splice(cartCopy.indexOf(toRemove!), 1)
         setCart(cartCopy)
     }
-  
 
+    async function completeOrder(){
+        const name = "NA"
+        const phone = "555-555-5555"
+        const email = "test@test.com"
+        const orderItems = cart.map((item: CartItem) => {return {text: `${item.code} ${item.name} (${item.adjustedPrice})`, price: item.adjustedPrice}})
+        try{
+            createOrder(name, phone, email, orderItems, storeId.current!)
+            setCart([])
+            toast("Order placed")
+        }
+        catch(e){
+            console.log(e)
+            toast("Error placing order.")
+        }
+    }
+  
     return(
         <div>
             <div className="menu-split flex flex-row w-full m-8">
                 <div className="menu-categories basis-1/4">
                     <div className="category-box w-80 min-h-48 border-2 border-black rounded-sm">
-                        {data && data.map(item => {
+                        {data && data.map((item: any) => {
                             return <div className={`category-item text-lg p-4 even:bg-slate-200 odd:bg-white hover:bg-cyan-100`} key={item.name} onClick={() => setCategory(getCategoryObj(item.name))}>{item.name} </div>
                         })}
                     </div>
@@ -83,7 +106,7 @@ export default function Page(){
                     <div className="item-box min-h-48 border-2 border-black rounded-sm">
                         <Table>
                             <TableBody>
-                                {data && category!.items.map(item => {
+                                {data && category!.items.map((item: any) => {
                                     return <TableRow key={item.name} className={`even:bg-slate-200 odd:bg-white hover:bg-cyan-100`}>
                                         <TableCell>{item.code}</TableCell>
                                         <TableCell>{item.name}</TableCell>
@@ -101,7 +124,7 @@ export default function Page(){
                                                     <div className="opt-radio">
                                                         <RadioGroup>
                                                             {
-                                                                item.options.map((opt, index) => {
+                                                                item.options.map((opt: {text: string, adjustment: number}, index: number) => {
                                                                     return(
                                                                         <div key={opt.text} className="flex items-center space-x-2">
                                                                             <RadioGroupItem value={`${opt.text} (${opt.adjustment})`} onClick={() => setItem(item.name, item.code, opt.adjustment, opt.text)} id={"radio-options-" + index} />

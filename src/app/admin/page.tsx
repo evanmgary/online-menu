@@ -1,21 +1,30 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import testData from "@/app/testdata.json"
 import { Table, TableCell, TableRow, TableBody } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
-import { getData, createCategory, createItem ,updateCategory, updateItem, deleteCategory, deleteItem } from "../actions/adminActions"
+import { Textarea } from "@/components/ui/textarea"
+import { getStoreId, getData, createCategory, createItem ,updateCategory, updateItem, deleteCategory, deleteItem } from "../actions/adminActions"
 
 
 export default function Page(){
     
-    const [data, setData] = useState(getData())
+    const [data, setData] = useState<any>(() => {return testData})
     const [category , setCategory] = useState(getCategoryObj("More Items"))
-    const [cart, setCart] = useState<CartItem[]>([])
-    const [selected, setSelected] = useState<CartItem>()
+    const storeId = useRef<number>()
+
+    useEffect(() => {
+        (async () => {
+            storeId.current = await getStoreId()
+            console.log(storeId.current)
+            getDataDB()
+        })()
+        
+        
+    }, [])
 
     //selected object is {code, name, optionName, adjustedPrice}
     interface CartItem{
@@ -26,113 +35,154 @@ export default function Page(){
         option: string
     }
 
-    interface Category{
-            name: string;
-            items: {
-                id: number,
-                name: string;
-                code: string;
-                basePrice: number;
-                options: {
-                    text: string;
-                    adjustment: number;
-                }[];
-        }[]
-    }
-
-    function getData(){
-        //fetch("/api")
-        return testData
+    async function getDataDB(){
+        try{
+            const dataDB = await getData(storeId.current!)
+            console.log(dataDB)
+            setData(dataDB)
+        }
+        catch(e){
+            console.log(e)
+            toast("Error getting data")
+        }
     }
     
     function getCategoryObj(name: string){
-        return data.find((item)=> item.name === name) 
+        return data.find((item: any)=> item.name === name) 
     }
 
-    function sumCart(){
-        return cart.reduce((accumulator, current) => accumulator + current.adjustedPrice, 0)
+    async function newCategory(){
+        try{
+            const name = (document.getElementById("category-name")! as HTMLInputElement).value
+            createCategory(name, storeId.current!)
+            getDataDB()
+            toast("Category created.")
+        }
+        catch(e){
+            console.log(e)
+            toast("Error")
+        }
     }
 
-    function setItem(name: string, code: string, adjustedPrice: number, option: string){
-        setSelected({id: Math.floor(Math.random() * 100000), name: name, code: code, adjustedPrice: adjustedPrice, option: option})
+    async function updCategory(catId: number){
+        try{
+            const name = (document.getElementById("category-name")! as HTMLInputElement).value
+            updateCategory(catId, name)
+            getDataDB()
+            toast("Category changed.")
+        }
+        catch(e){
+            console.log(e)
+            toast("Database error.")
+        }
     }
 
-    function addItem(code: string, name: string, itemId: string){
-        const optionsText = (document.getElementById(itemId)! as HTMLInputElement).value
+    async function delCategory(catId: number){
+        try{
+            deleteCategory(catId)
+            getDataDB()
+            toast("Category deleted.")
+        }
+        catch(e){
+            console.log(e)
+            toast("Database error.")
+        }
     }
 
-    function newCategory(){
-        
+    async function addNewItem(catId: number){
+        try{
+            const code = (document.getElementById("new-item-code")! as HTMLInputElement).value
+            const name = (document.getElementById("new-item-name")! as HTMLInputElement).value
+            const price = parseFloat((document.getElementById("new-item-price")! as HTMLInputElement).value)
+            const desc = (document.getElementById("new-item-description")! as HTMLInputElement).value
+            const options = parseOptions((document.getElementById("new-item-options")! as HTMLInputElement).value)
+            createItem(name, code, desc, price, options, catId)
+            getDataDB()
+            toast("Item added.")
+        }
+        catch(e){
+            console.log(e)
+            toast("Database error.")
+        }
     }
 
-    function addNewItem(){
-        const code = (document.getElementById("new-item-code")! as HTMLInputElement).value
-        const name = (document.getElementById("new-item-code")! as HTMLInputElement).value
-        const price = (document.getElementById("new-item-code")! as HTMLInputElement).value
-        const desc = (document.getElementById("new-item-description")! as HTMLInputElement).value
-        const options = (document.getElementById("new-item-options")! as HTMLInputElement).value
+    async function modifyItem(itemId: number){
+        try{
+            const code = (document.getElementById(itemId + "-code")! as HTMLInputElement).value
+            const name = (document.getElementById(itemId + "-name")! as HTMLInputElement).value
+            const price = parseFloat((document.getElementById(itemId + "-price")! as HTMLInputElement).value)
+            const desc = (document.getElementById(itemId + "-description")! as HTMLInputElement).value
+            const options = parseOptions((document.getElementById(itemId + "-options")! as HTMLInputElement).value)
+            updateItem(name, code, desc, price, options, itemId)
+            getDataDB()
+            toast("Item changed.")
+        }
+        catch(e){
+            console.log(e)
+            toast("Database error")
+        }
     }
 
-    function modifyItem(itemId: number){
-        const code = (document.getElementById(itemId + "-code")! as HTMLInputElement).value
-        const name = (document.getElementById(itemId + "-code")! as HTMLInputElement).value
-        const price = (document.getElementById(itemId + "-code")! as HTMLInputElement).value
-        const desc = (document.getElementById(itemId + "-description")! as HTMLInputElement).value
-        const options = (document.getElementById(itemId + "-options")! as HTMLInputElement).value
-    }
-
-    function removeItem(itemId: number){
-        
-    }
-    
-    function parseOptions(opts: string){
-        const regex = /^([^:]+):\(([\+\-]?\d+\.\d\d)\)$/g
-        const lines = opts.split("\n")
-        const optArr = []
-        for (let line of lines){
-            const parts = Array.from(line.matchAll(regex))
-            optArr.push({text: parts[0][1].toString(), adjustment: parseFloat(parts[0][2].toString())})
+    async function removeItem(itemId: number){
+        try {
+            deleteItem(itemId)
+            getDataDB()
+            toast("Item removed.")
+        } catch (error) {
+            toast("Database error")
         }
         
     }
-
-    function chgCategory(catId: number){
-
-    }
-
-    function delCategory(catId: number){
-        
-    }
+    
   
+    function parseOptions(opts: string){
+        console.log(opts)
+            const regex = /^([^:]+):\(([\+\-]?\d+\.\d\d)\)$/g
+            const lines = opts.split("\n")
+            const optArr = []
+            for (let line of lines){
+                const parts = Array.from(line.matchAll(regex))
+                optArr.push({text: parts[0][1].toString(), adjustment: parseFloat(parts[0][2].toString())})
+            }
+            return optArr
+        }
 
     return(
         <div>
             <div className="menu-split flex flex-row w-full m-8">
                 <div className="menu-categories basis-1/4">
                     <div className="category-box w-80 min-h-48 border-2 border-black rounded-sm">
-                        {data && data.map(cat => {
+                        {data && data.map((cat: any) => {
                             return <div className={`category-item text-lg p-4 even:bg-slate-200 odd:bg-white hover:bg-cyan-100`} key={cat.name} onClick={() => setCategory(getCategoryObj(cat.name))}>
                                 {cat.name} 
                                 <Popover>
-                                    <PopoverTrigger>
+                                    <PopoverTrigger asChild>
                                         <Button>Modify/Delete</Button>
                                     </PopoverTrigger>
                                     <PopoverContent>
-                                        <Input type="text" placeholder="Category name.."></Input>
-                                        <Button onClick={() => chgCategory(cat.id)}>Update Category</Button>
+                                        <Input id="category-name" type="text" placeholder="Category name.."></Input>
+                                        <Button onClick={() => updCategory(cat.id)}>Update Category</Button>
                                         <Button onClick={() => delCategory(cat.id)}>Delete Category</Button>
                                     </PopoverContent>
                                 </Popover>
                             </div>
                         })}
                     </div>
-                    <div className={`category-item text-lg p-4 even:bg-slate-200 odd:bg-white hover:bg-cyan-100`} onClick={newCategory}>Add New Category</div>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button>Add New Category</Button>
+                        </PopoverTrigger>
+                        <PopoverContent>
+                            <Input id="category-name" type="text" placeholder="Category name.."></Input>
+                            <Button onClick={newCategory}>Add Category</Button>
+                        </PopoverContent>
+                    </Popover>
                 </div>
                 <div className="menu-items basis-3/4 mr-10">
                     <div className="item-box min-h-48 border-2 border-black rounded-sm">
                         <Table>
                             <TableBody>
-                                {data && category!.items.map(item => {
+                                {(data.length > 0) && category!.items.map((item: any) => {
                                     return <TableRow key={item.name} className={`even:bg-slate-200 odd:bg-white hover:bg-cyan-100`}>
                                         <TableCell>{item.code}</TableCell>
                                         <TableCell>{item.name}</TableCell>
@@ -145,13 +195,13 @@ export default function Page(){
                                                 <PopoverContent>
                                                     <div className="opt-header">
                                                         <h2>Modify Item</h2>
-                                                        <Input type="text" id={`${item.id}-code`} placeholder="Code.." value={item.code}></Input>
-                                                        <Input type="text" id= {`${item.id}-name`} placeholder="Name.." value={item.name}></Input>
-                                                        <Input type="text" id={`${item.id}-desc`} placeholder="Description.." value={item.desc}></Input>
-                                                        <Input type="text" id={`${item.id}-price`}placeholder="Base Price.." value={item.basePrice}></Input>
+                                                        <Input type="text" id={`${item.id}-code`} placeholder="Code.." defaultValue={item.code}></Input>
+                                                        <Input type="text" id= {`${item.id}-name`} placeholder="Name.." defaultValue={item.name}></Input>
+                                                        <Input type="text" id={`${item.id}-desc`} placeholder="Description.." defaultValue={item.desc}></Input>
+                                                        <Input type="text" id={`${item.id}-price`}placeholder="Base Price.." defaultValue={item.basePrice}></Input>
                                                     </div>
                                                     <div className="opt-Input">
-                                                        <Input type="text" id={item.code + "-" + item.name + "-opts"} placeholder="Enter options. Enter one option per line in the format: Option name (1.00)"></Input>
+                                                        <Textarea id={item.code + "-" + item.name + "-opts"} placeholder="Enter options. Enter one option per line in the format: Option name (1.00)" defaultValue={item.options.reduce((acc: string, val: {text: string, adjustment: number}) => acc + val.text + ":" + val.adjustment + "\n", "")}></Textarea>
                                                         <Button onClick={() => modifyItem(item.id)}>Add Item to Menu</Button>
                                                         <Button onClick={() => removeItem(item.id)}>Delete Item</Button>
                                                     </div>
@@ -175,8 +225,8 @@ export default function Page(){
                                                         <Input type="text" id="new-item-price"placeholder="Base Price.."></Input>
                                                     </div>
                                                     <div className="opt-Input">
-                                                        <Input type="text" id="new-item-options" placeholder="Enter options. Enter one option per line in the format: Option name (1.00)"></Input>
-                                                        <Button onClick={addNewItem}>Add Item to Menu</Button>
+                                                        <Textarea id="new-item-options" placeholder="Enter options. Enter one option per line in the format: Option name (1.00)"></Textarea>
+                                                        <Button onClick={() => addNewItem(category!.id)}>Add Item to Menu</Button>
                                                     </div>
                                                 </PopoverContent>
                                             </Popover>
@@ -187,33 +237,6 @@ export default function Page(){
                     </div>
                 </div>
             </div>
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button className="float-right mr-10">View Cart and Order</Button>
-                </PopoverTrigger>
-                <PopoverContent>
-                    <Table>
-                        <TableBody>
-                        {
-                            cart.length < 1 ? <TableRow><TableCell>No items in cart</TableCell></TableRow> : 
-                            cart.map(item => {
-                                return <TableRow key={item.name}>
-                                    <TableCell>{`${item.code}  ${item.name} - ${item.option}`}</TableCell>
-                                    <TableCell>{"$" + (item.adjustedPrice)}</TableCell>
-                                    <TableCell><Button onClick={() => removeItem(item.id)}>Remove</Button></TableCell>
-                                </TableRow>
-                            })
-                        }
-                        </TableBody>
-                    </Table>
-                    <div>
-                        <p><span>Subtotal: </span><span>${0 + sumCart()}</span></p>
-                        <p><span>Tax: </span><span>9%</span></p>
-                        <p><span>Subtotal: </span><span>${((0 + sumCart()) * 1.09).toFixed(2)}</span></p>
-                        <Button>Place Order</Button>
-                    </div>
-                </PopoverContent>
-            </Popover>
         </div>
     )
 }

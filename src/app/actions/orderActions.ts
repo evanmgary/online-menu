@@ -1,6 +1,14 @@
 "use server"
-import prisma from "../client";
+import {prisma} from "../client";
 
+export async function getStoreId(){
+    const store = await prisma.store.findFirst({
+        include: {
+            currentOrders: true
+        }
+    })
+    return store?.id
+}
 
 export async function getOrders(storeId: number){
     const store = await prisma.store.findUnique({
@@ -8,7 +16,11 @@ export async function getOrders(storeId: number){
             id: storeId
         },
         include: {
-            currentOrders: true
+            currentOrders: {
+                include: {
+                    orderItems: true
+                }
+            }
         }
     })
     return store?.currentOrders
