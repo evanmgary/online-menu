@@ -1,6 +1,6 @@
 "use server"
 import {prisma} from "../client";
-import "./jsonfix.ts"
+import "./jsonfix"
 
 export async function getStoreId(){
     const store = await prisma.store.findFirst({
