@@ -1,6 +1,10 @@
 "use server"
 import {prisma} from "../client";
 
+export async function unlock(pwd: string){
+    return pwd === "unlock"
+}
+
 export async function getStoreId(){
     const store = await prisma.store.findFirst({
         

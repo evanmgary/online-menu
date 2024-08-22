@@ -7,7 +7,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { getStoreId, getData, createCategory, createItem ,updateCategory, updateItem, deleteCategory, deleteItem } from "../actions/adminActions"
+import { unlock, getStoreId, getData, createCategory, createItem ,updateCategory, updateItem, deleteCategory, deleteItem } from "../actions/adminActions"
 
 
 export default function Page(){
@@ -15,15 +15,17 @@ export default function Page(){
     const [data, setData] = useState<any>(() => {return testData})
     const [category , setCategory] = useState(getCategoryObj("More Items"))
     const storeId = useRef<number>()
+    const [lockVisible, setLockVisible] = useState({display: "inline"})
 
     useEffect(() => {
         (async () => {
             storeId.current = await getStoreId()
-            console.log(storeId.current)
-            getDataDB()
+            const dataDB = await getDataDB()
+            if (data.length > 0){
+                setCategory(dataDB![0])
+            }
+            console.log(data)
         })()
-        
-        
     }, [])
 
     //selected object is {code, name, optionName, adjustedPrice}
@@ -38,13 +40,18 @@ export default function Page(){
     async function getDataDB(){
         try{
             const dataDB = await getData(storeId.current!)
-            console.log(dataDB)
+            //console.log(dataDB)
             setData(dataDB)
+            return dataDB
         }
         catch(e){
             console.log(e)
             toast("Error getting data")
         }
+    }
+
+    function getFirstCategory(){
+        return data[0]
     }
     
     function getCategoryObj(name: string){
@@ -147,8 +154,20 @@ export default function Page(){
             return optArr
         }
 
+    async function unlockAdmin(){
+        if (await unlock((document.getElementById("pass-text") as HTMLInputElement).value)){
+            setLockVisible({display: "none"})
+        }
+    }
+
     return(
         <div>
+            <div id="lock-screen" className="absolute w-screen h-screen bg-white z-10" style={lockVisible}>
+                <div className="flex items-center justify-center m-40">
+                    <Input id="pass-text" className="w-100 mr-10" type="text" placeholder="Enter password"></Input>
+                    <Button onClick={unlockAdmin}>Unlock</Button>
+                </div>
+            </div>
             <div className="menu-split flex flex-row w-full m-8">
                 <div className="menu-categories basis-1/4">
                     <div className="category-box w-80 min-h-48 border-2 border-black rounded-sm">
@@ -157,12 +176,12 @@ export default function Page(){
                                 {cat.name} 
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button>Modify/Delete</Button>
+                                        <Button className="m-4">Modify/Delete</Button>
                                     </PopoverTrigger>
                                     <PopoverContent>
                                         <Input id="category-name" type="text" placeholder="Category name.."></Input>
                                         <Button onClick={() => updCategory(cat.id)}>Update Category</Button>
-                                        <Button onClick={() => delCategory(cat.id)}>Delete Category</Button>
+                                        <Button className="mt-4" onClick={() => delCategory(cat.id)}>Delete Category</Button>
                                     </PopoverContent>
                                 </Popover>
                             </div>
@@ -170,11 +189,11 @@ export default function Page(){
                     </div>
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button>Add New Category</Button>
+                            <Button className="mt-4">Add New Category</Button>
                         </PopoverTrigger>
                         <PopoverContent>
                             <Input id="category-name" type="text" placeholder="Category name.."></Input>
-                            <Button onClick={newCategory}>Add Category</Button>
+                            <Button className="mt-4" onClick={newCategory}>Add Category</Button>
                         </PopoverContent>
                     </Popover>
                 </div>
@@ -202,11 +221,11 @@ export default function Page(){
                                                     </div>
                                                     <div className="opt-Input">
                                                         <Textarea id={item.code + "-" + item.name + "-opts"} placeholder="Enter options. Enter one option per line in the format: Option name (1.00)" defaultValue={item.options.reduce((acc: string, val: {text: string, adjustment: number}) => acc + val.text + ":" + val.adjustment + "\n", "")}></Textarea>
-                                                        <Button onClick={() => modifyItem(item.id)}>Add Item to Menu</Button>
-                                                        <Button onClick={() => removeItem(item.id)}>Delete Item</Button>
+                                                        <Button className="mt-4" onClick={() => modifyItem(item.id)}>Add Item to Menu</Button>
+                                                        <Button className="mt-4" onClick={() => removeItem(item.id)}>Delete Item</Button>
                                                     </div>
                                                 </PopoverContent>
-                                            </Popover>
+                                            </Popover> 
                                         </TableCell>
                                     </TableRow>
                                 })}

@@ -1,5 +1,6 @@
 "use server"
 import {prisma} from "../client";
+import "./jsonfix.ts"
 
 export async function getStoreId(){
     const store = await prisma.store.findFirst({
@@ -23,7 +24,9 @@ export async function getOrders(storeId: number){
             }
         }
     })
-    return store?.currentOrders
+    
+    
+    return JSON.parse(JSON.stringify(store?.currentOrders))
 }
 
 export async function deleteOrder(orderId: number, storeId: number){

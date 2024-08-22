@@ -127,7 +127,7 @@ export default function Page(){
                                                                 item.options.map((opt: {text: string, adjustment: number}, index: number) => {
                                                                     return(
                                                                         <div key={opt.text} className="flex items-center space-x-2">
-                                                                            <RadioGroupItem value={`${opt.text} (${opt.adjustment})`} onClick={() => setItem(item.name, item.code, opt.adjustment, opt.text)} id={"radio-options-" + index} />
+                                                                            <RadioGroupItem value={`${opt.text} (${opt.adjustment})`} onClick={() => setItem(item.name, item.code, item.price + opt.adjustment, opt.text)} id={"radio-options-" + index} />
                                                                             <Label htmlFor={"radio-options-" + index}>{`${opt.text} (${opt.adjustment})`}</Label>
                                                                         </div>
                                                                     )
@@ -170,7 +170,7 @@ export default function Page(){
                         <p><span>Subtotal: </span><span>${0 + sumCart()}</span></p>
                         <p><span>Tax: </span><span>9%</span></p>
                         <p><span>Subtotal: </span><span>${((0 + sumCart()) * 1.09).toFixed(2)}</span></p>
-                        <Button>Place Order</Button>
+                        <Button onClick={completeOrder}>Place Order</Button>
                     </div>
                 </PopoverContent>
             </Popover>
