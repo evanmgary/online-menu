@@ -21,7 +21,10 @@ export default function Page(){
         (async () => {
             storeId.current = await getStoreId()
             console.log(storeId.current)
-            getDataDB()
+            const dataDB = await getDataDB()
+            if (data.length > 0){
+                setCategory(dataDB![0])
+            }
         })()
         
         
@@ -41,6 +44,7 @@ export default function Page(){
             const dataDB = await getData(storeId.current!)
             console.log(dataDB)
             setData(dataDB)
+            return dataDB
         }
         catch(e){
             console.log(e)
