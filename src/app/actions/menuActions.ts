@@ -1,5 +1,6 @@
 "use server"
 import {prisma} from "../client"
+import "./jsonfix"
 
 export async function getStoreId(){
     const store = await prisma.store.findFirst({
@@ -50,5 +51,5 @@ export async function getData(storeId: number){
         }
     })
 
-    return store?.categories
+    return JSON.parse(JSON.stringify(store?.categories))
 }

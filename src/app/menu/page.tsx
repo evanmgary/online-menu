@@ -122,7 +122,7 @@ export default function Page(){
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-90 m-l-6">
                                                     <div className="opt-header">
-                                                        <h1 className="opt-code-name">{item.code} {item.name} <span>${item.basePrice}</span></h1>
+                                                        <h1 className="opt-code-name">{item.code} {item.name} <span>${parseFloat(item.basePrice).toFixed(2)}</span></h1>
                                                         <p className="opt-desc">{item.desc}</p>
                                                     </div>
                                                     <div className="opt-radio">
@@ -131,8 +131,8 @@ export default function Page(){
                                                                 item.options.map((opt: {text: string, adjustment: number}, index: number) => {
                                                                     return(
                                                                         <div key={opt.text} className="flex items-center space-x-2">
-                                                                            <RadioGroupItem value={`${opt.text} (${opt.adjustment})`} onClick={() => setItem(item.name, item.code, item.price + opt.adjustment, opt.text)} id={"radio-options-" + index} />
-                                                                            <Label htmlFor={"radio-options-" + index}>{`${opt.text} (${opt.adjustment})`}</Label>
+                                                                            <RadioGroupItem value={`${opt.text} (${opt.adjustment})`} onClick={() => setItem(item.name, item.code, (parseFloat(item.basePrice) + opt.adjustment), opt.text)} id={"radio-options-" + index} />
+                                                                            <Label htmlFor={"radio-options-" + index}>{`${opt.text} (${opt.adjustment > 0 ? "+" : ""}${opt.adjustment.toFixed(2)})`}</Label>
                                                                         </div>
                                                                     )
                                                                 })
@@ -163,7 +163,7 @@ export default function Page(){
                             cart.map(item => {
                                 return <TableRow key={item.name}>
                                     <TableCell>{`${item.code}  ${item.name} - ${item.option}`}</TableCell>
-                                    <TableCell>{"$" + (item.adjustedPrice)}</TableCell>
+                                    <TableCell>{"$" + (item.adjustedPrice.toFixed(2))}</TableCell>
                                     <TableCell><Button onClick={() => removeItem(item.id)}>Remove</Button></TableCell>
                                 </TableRow>
                             })
