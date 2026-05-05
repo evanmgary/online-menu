@@ -61,7 +61,7 @@ export default function Page(){
     async function newCategory(){
         try{
             const name = (document.getElementById("category-name")! as HTMLInputElement).value
-            createCategory(name, storeId.current!)
+            await createCategory(name, storeId.current!)
             getDataDB()
             toast("Category created.")
         }
@@ -74,7 +74,7 @@ export default function Page(){
     async function updCategory(catId: number){
         try{
             const name = (document.getElementById("category-name")! as HTMLInputElement).value
-            updateCategory(catId, name)
+            await updateCategory(catId, name)
             getDataDB()
             toast("Category changed.")
         }
@@ -86,7 +86,7 @@ export default function Page(){
 
     async function delCategory(catId: number){
         try{
-            deleteCategory(catId)
+            await deleteCategory(catId)
             getDataDB()
             toast("Category deleted.")
         }
@@ -103,7 +103,7 @@ export default function Page(){
             const price = parseFloat((document.getElementById("new-item-price")! as HTMLInputElement).value)
             const desc = (document.getElementById("new-item-description")! as HTMLInputElement).value
             const options = parseOptions((document.getElementById("new-item-options")! as HTMLInputElement).value)
-            createItem(name, code, desc, price, options, catId)
+            await createItem(name, code, desc, price, options, catId)
             getDataDB()
             toast("Item added.")
         }
@@ -120,7 +120,7 @@ export default function Page(){
             const price = parseFloat((document.getElementById(itemId + "-price")! as HTMLInputElement).value)
             const desc = (document.getElementById(itemId + "-description")! as HTMLInputElement).value
             const options = parseOptions((document.getElementById(itemId + "-options")! as HTMLInputElement).value)
-            updateItem(name, code, desc, price, options, itemId)
+            await updateItem(name, code, desc, price, options, itemId)
             getDataDB()
             toast("Item changed.")
         }
@@ -132,7 +132,7 @@ export default function Page(){
 
     async function removeItem(itemId: number){
         try {
-            deleteItem(itemId)
+            await deleteItem(itemId)
             getDataDB()
             toast("Item removed.")
         } catch (error) {
@@ -142,17 +142,24 @@ export default function Page(){
     }
     
   
-    function parseOptions(opts: string){
-        console.log(opts)
-            const regex = /^([^:]+):\(([\+\-]?\d+\.\d\d)\)$/g
-            const lines = opts.split("\n")
-            const optArr = []
-            for (let line of lines){
-                const parts = Array.from(line.matchAll(regex))
-                optArr.push({text: parts[0][1].toString(), adjustment: parseFloat(parts[0][2].toString())})
-            }
-            return optArr
+    function parseOptions(opts: string) {
+        return opts
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => {
+        const match = line.match(/^(.+?)\s*:?\s*\(?\s*([+-]?\d+(?:\.\d{1,2})?)\s*\)?$/)
+
+        if (!match) {
+            throw new Error(`Invalid option format: ${line}`)
         }
+
+        return {
+            text: match[1].trim(),
+            adjustment: parseFloat(match[2]),
+        }
+    })
+}
 
     async function unlockAdmin(){
         if (await unlock((document.getElementById("pass-text") as HTMLInputElement).value)){
@@ -216,11 +223,11 @@ export default function Page(){
                                                         <h2>Modify Item</h2>
                                                         <Input type="text" id={`${item.id}-code`} placeholder="Code.." defaultValue={item.code}></Input>
                                                         <Input type="text" id= {`${item.id}-name`} placeholder="Name.." defaultValue={item.name}></Input>
-                                                        <Input type="text" id={`${item.id}-desc`} placeholder="Description.." defaultValue={item.desc}></Input>
+                                                        <Input type="text" id={`${item.id}-description`} placeholder="Description.." defaultValue={item.desc}></Input>
                                                         <Input type="text" id={`${item.id}-price`}placeholder="Base Price.." defaultValue={item.basePrice}></Input>
                                                     </div>
                                                     <div className="opt-Input">
-                                                        <Textarea id={item.code + "-" + item.name + "-opts"} placeholder="Enter options. Enter one option per line in the format: Option name (1.00)" defaultValue={item.options.reduce((acc: string, val: {text: string, adjustment: number}) => acc + val.text + ":" + val.adjustment + "\n", "")}></Textarea>
+                                                        <Textarea id={item.code + "-" + item.name + "-options"} placeholder="Enter options. Enter one option per line in the format: Option name (1.00)" defaultValue={item.options.reduce((acc: string, val: {text: string, adjustment: number}) => acc + val.text + ":" + val.adjustment + "\n", "")}></Textarea>
                                                         <Button className="mt-4" onClick={() => modifyItem(item.id)}>Add Item to Menu</Button>
                                                         <Button className="mt-4" onClick={() => removeItem(item.id)}>Delete Item</Button>
                                                     </div>

@@ -13,7 +13,9 @@ export default function Page(){
     const listening = useRef<boolean>(false)
     const [orders, setOrders] = useState<Order[]>([])
     const [completedOrders, setCompletedOrders] = useState<Order[]>([])
-    const timer = useRef<NodeJS.Timer>()
+    const timer = useRef<NodeJS.Timeout | null>(null)
+    const clock = useRef<NodeJS.Timeout | null>(null)
+    const [now, setNow] = useState(Date.now())
     const [time, setTime] = useState(BigInt(Date.now()))
     const storeId = useRef<number>()
 
@@ -45,10 +47,18 @@ export default function Page(){
             if (listening.current){
                 setTime(BigInt(Date.now()))
                 console.log("Polling...")
-                getOrdersDB()
+                await getOrdersDB()
             }
         }
         timer.current = setInterval(timerFunc, 5000)
+        clock.current = setInterval(() => {
+            setNow(Date.now())
+        }, 1000)
+        return () => {
+            if (timer.current) clearInterval(timer.current)
+            if (clock.current) clearInterval(clock.current)
+        }
+        
     }, [])
     
     
@@ -64,7 +74,7 @@ export default function Page(){
     }
 
     function getColor(startTime: bigint){
-        const timeDiff = time - startTime
+        const timeDiff = BigInt(now) - startTime
         if (timeDiff < BigInt(1000 * 60 * 5)){
             return "green"
         }

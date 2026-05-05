@@ -22,7 +22,7 @@ export default function Page(){
             storeId.current = await getStoreId()
             console.log(storeId.current)
             const dataDB = await getDataDB()
-            if (data.length > 0){
+            if (dataDB && data.length > 0){
                 setCategory(dataDB![0])
             }
         })()
@@ -86,7 +86,7 @@ export default function Page(){
         const email = "test@test.com"
         const orderItems = cart.map((item: CartItem) => {return {text: `${item.code} ${item.name} (${item.adjustedPrice})`, price: item.adjustedPrice}})
         try{
-            createOrder(name, phone, email, orderItems, storeId.current!)
+            await createOrder(name, phone, email, orderItems, storeId.current!)
             setCart([])
             toast("Order placed")
         }
